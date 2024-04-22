@@ -6,6 +6,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/mattn/go-sqlite3 v1.14.22
+	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
 	modernc.org/sqlite v1.29.5
 )

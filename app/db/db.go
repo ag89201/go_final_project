@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 
 	model "github.com/ag89201/go_final_project/app"
 	_ "modernc.org/sqlite"
@@ -116,4 +117,24 @@ func (s Db) UpdateTask(task model.Task) (int64, error) {
 	}
 
 	return rowsAffected, nil
+}
+
+func (s Db) DeleteTask(id int) error {
+
+	res, err := s.db.Exec(`DELETE FROM scheduler WHERE id = :id`, sql.Named("id", id))
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+
+		return errors.New("task not found")
+	}
+
+	return nil
 }

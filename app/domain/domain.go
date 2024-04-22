@@ -2,7 +2,6 @@ package domain
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -35,7 +34,6 @@ func FileNotExists(filePath string) bool {
 }
 
 func CreateFile(filePath string) error {
-	fmt.Printf("Creating file: %s\n", filePath)
 	_, err := os.Create(filePath)
 	return err
 }
