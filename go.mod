@@ -4,6 +4,7 @@ go 1.22.1
 
 require (
 	github.com/go-chi/chi/v5 v5.0.12
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/sirupsen/logrus v1.9.3

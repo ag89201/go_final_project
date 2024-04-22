@@ -5,13 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
 	model "github.com/ag89201/go_final_project/app"
 	"github.com/ag89201/go_final_project/app/db"
 	"github.com/ag89201/go_final_project/app/domain"
+	"github.com/ag89201/go_final_project/app/middleware"
 	"github.com/go-chi/chi/v5"
+	"github.com/golang-jwt/jwt"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -22,6 +25,7 @@ const (
 	apiTaskPattern     = "/api/task"
 	apiTasksPattern    = "/api/tasks"
 	apiTaskPatternDone = "/api/task/done"
+	apiSigninPattern   = "/api/signin"
 	contentTypeHeader  = "Content-Type"
 )
 
@@ -277,18 +281,70 @@ func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func SigninHandler(w http.ResponseWriter, r *http.Request) {
+	var signin model.Sign
+	var buf bytes.Buffer
+
+	if _, err := buf.ReadFrom(r.Body); err != nil {
+		errorResponse(w, "error reading request body", err)
+		return
+	}
+
+	if err := json.Unmarshal(buf.Bytes(), &signin); err != nil {
+		errorResponse(w, "Error parsing JSON", err)
+		return
+	}
+
+	envPass := os.Getenv("TODO_PASSWORD")
+	if signin.Password == envPass {
+		jwtInstance := jwt.New(jwt.SigningMethodHS256)
+		token, err := jwtInstance.SignedString([]byte(envPass))
+		if err != nil {
+			errorResponse(w, "error signing token", err)
+		}
+
+		takIdData, err := json.Marshal(model.AuthToken{Token: token})
+		if err != nil {
+			errorResponse(w, "error marshaling response", err)
+			return
+		}
+		w.Header().Set(contentTypeHeader, jsonMimeType)
+		w.WriteHeader(http.StatusOK)
+		_, err = w.Write(takIdData)
+
+		if err != nil {
+			errorResponse(w, "error writing response", err)
+			return
+		}
+	} else {
+		errData, err := json.Marshal(model.ErrorResponse{Error: "wrong password"})
+		if err != nil {
+			errorResponse(w, "error marshaling response", err)
+			return
+		}
+		w.Header().Set(contentTypeHeader, jsonMimeType)
+		w.WriteHeader(http.StatusUnauthorized)
+		_, err = w.Write(errData)
+		if err != nil {
+			errorResponse(w, "error writing response", err)
+			return
+		}
+	}
+}
+
 func StartServer(port string, webDir string) error {
 
 	r := chi.NewRouter()
 
 	r.Mount(mountEndpoint, http.FileServer(http.Dir(webDir)))
-	r.Get(nextDatePattern, NextDateHandler)
-	r.Post(apiTaskPattern, PostTaskHandler)
-	r.Get(apiTasksPattern, GetTasksHandler)
-	r.Get(apiTaskPattern, GetTaskHandler)
-	r.Put(apiTaskPattern, PutTaskHandler)
-	r.Post(apiTaskPatternDone, PostDoneTaskHandler)
-	r.Delete(apiTaskPattern, DeleteTaskHandler)
+	r.Get(nextDatePattern, middleware.Auth(NextDateHandler))
+	r.Post(apiTaskPattern, middleware.Auth(PostTaskHandler))
+	r.Get(apiTasksPattern, middleware.Auth(GetTasksHandler))
+	r.Get(apiTaskPattern, middleware.Auth(GetTaskHandler))
+	r.Put(apiTaskPattern, middleware.Auth(PutTaskHandler))
+	r.Post(apiTaskPatternDone, middleware.Auth(PostDoneTaskHandler))
+	r.Delete(apiTaskPattern, middleware.Auth(DeleteTaskHandler))
+	r.Post(apiSigninPattern, SigninHandler)
 
 	// Start server
 	log.Info("Starting server...")
