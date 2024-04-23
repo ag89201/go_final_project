@@ -17,11 +17,6 @@ jobs:
 
       - name: Run Application
         run: ./go_final_project &
-        # background: true
-      
-      
-      # - name: Run Unit Tests
-      #   run: GOOS=linux GOARCH=amd64 go test ./tests
 
       - name: Run Test 1 TestApp
         run: |
