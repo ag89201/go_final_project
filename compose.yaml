@@ -8,7 +8,7 @@ services:
     environment:
       TODO_PORT: 7540
       TODO_DBFILE: "/app/db/scheduler.db"
-      TODO_PASSWORD: "12345"
+      TODO_PASSWORD: ""
     volumes:
       - appdata:/app/db
 
