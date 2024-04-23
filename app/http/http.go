@@ -12,6 +12,7 @@ import (
 	model "github.com/ag89201/go_final_project/app"
 	"github.com/ag89201/go_final_project/app/db"
 	"github.com/ag89201/go_final_project/app/domain"
+
 	"github.com/ag89201/go_final_project/app/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt"
@@ -282,7 +283,7 @@ func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func SigninHandler(w http.ResponseWriter, r *http.Request) {
-	var signin model.Sign
+
 	var buf bytes.Buffer
 
 	if _, err := buf.ReadFrom(r.Body); err != nil {
@@ -290,6 +291,7 @@ func SigninHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var signin model.Sign
 	if err := json.Unmarshal(buf.Bytes(), &signin); err != nil {
 		errorResponse(w, "Error parsing JSON", err)
 		return

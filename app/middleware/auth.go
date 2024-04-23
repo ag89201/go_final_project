@@ -11,7 +11,7 @@ import (
 func Auth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		pass := os.Getenv("TODO_PASSWORD")
-		if len(pass) == 0 {
+		if len(pass) > 0 {
 			var cookieToken string
 			cookie, err := r.Cookie("token")
 			if err == nil {
