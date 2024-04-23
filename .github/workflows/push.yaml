@@ -18,10 +18,46 @@ jobs:
       - name: Run Application
         run: ./go_final_project &
         # background: true
-
       
-      - name: Run Unit Tests
-        run: GOOS=linux GOARCH=amd64 go test ./tests
+      
+      # - name: Run Unit Tests
+      #   run: GOOS=linux GOARCH=amd64 go test ./tests
+
+      - name: Run Test 1
+        run: |
+          go test  -run ^TestApp$ ./tests
+
+      - name: Run Test 2
+        run: |
+          go test -run ^TestDB$ ./tests
+
+      - name: Run Test 3
+        run: |
+          go test -run ^TestNextDate$ ./tests
+
+      - name: Run Test 4
+        run: |
+          go test -run ^TestAddTask$ ./tests
+
+      - name: Run Test 5
+        run: |
+          go test -run ^TestTasks$ ./tests
+
+      - name: Run Test 6.1
+        run: |
+          go test -run ^TestTask$ ./tests
+
+      - name: Run Test 6.2
+        run: |
+          go test -run ^TestEditTask$ ./tests
+
+      - name: Run Test 7.1
+        run: |
+          go test -run ^TestDone$ ./tests
+
+      - name: Run Test 7.2
+        run: |
+          go test -run ^TestDelTask$ ./tests
 
       - name: Vet
         run: |
