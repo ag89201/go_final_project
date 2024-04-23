@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/ag89201/go_final_project/app/db"
 	"github.com/ag89201/go_final_project/app/domain"
-	"github.com/ag89201/go_final_project/app/http"
+	"github.com/ag89201/go_final_project/app/model"
+	"github.com/ag89201/go_final_project/app/server"
 
 	log "github.com/sirupsen/logrus"
 	_ "modernc.org/sqlite"
@@ -32,19 +32,19 @@ func main() {
 		log.Info("creating new file: " + dbFile)
 	}
 	//open database
-	db.Database, err = db.New(dbFile)
+	model.Database, err = model.NewDataBase(dbFile)
 	if err != nil {
 		log.Panic(err)
 	}
-	defer db.Database.Close()
+	defer model.Database.Close()
 	// Create the tables
 	log.Info("open|create table......")
-	db.Database.CreateSchedulerTable()
+	model.Database.CreateSchedulerTable()
 
 	log.Info("create index......")
-	db.Database.CreateIndex()
+	model.Database.CreateIndex()
 
 	// Start the web server
 	port := domain.GetEnv("TODO_PORT", defPort)
-	log.Fatal(http.StartServer(port, webDir))
+	log.Fatal(server.Start(port, webDir))
 }
