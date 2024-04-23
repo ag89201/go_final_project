@@ -10,9 +10,7 @@ jobs:
       - name: Set up Go environment
         run: GOOS=linux GOARCH=amd64 go mod tidy
 
-      - name: Build Application
-        run: go build -v .
-      
+     
       - name: Run Application
         run: go run -v .
 
