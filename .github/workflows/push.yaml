@@ -9,8 +9,9 @@ jobs:
 
       - name: Set up Go environment
         run: GOOS=linux GOARCH=amd64 go mod tidy
+
       - name : Build
-        run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./go_final_project
+        run: go build -o go_final_project
       
       - name: Run Application
         run: ./go_final_project
