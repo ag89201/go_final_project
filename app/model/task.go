@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	DateFormat = "20060102"
-	LimitTask  = 50
+	DateFormat       = "20060102"
+	SearchDateFormat = "02.01.2006"
+	LimitTask        = 50
 )
 
 type Task struct {

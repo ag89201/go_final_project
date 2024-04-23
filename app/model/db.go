@@ -137,3 +137,47 @@ func (s Db) DeleteTask(id int) error {
 
 	return nil
 }
+
+func (s Db) GetTasksByDate(date string) ([]Task, error) {
+	var tasks []Task
+	rows, err := s.db.Query(`SELECT id, date, title, comment, repeat FROM scheduler WHERE date = :date LIMIT :limit`, sql.Named("date", date), sql.Named("limit", LimitTask))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var task Task
+		err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+		if err != nil {
+
+			return nil, err
+		}
+
+		tasks = append(tasks, task)
+
+	}
+
+	return tasks, nil
+}
+
+func (s Db) GetTasksByTitleOrComment(search string) ([]Task, error) {
+	var tasks []Task
+	rows, err := s.db.Query(`SELECT id, date, title, comment, repeat FROM scheduler WHERE title LIKE :search OR comment LIKE :search ORDER BY date LIMIT :limit `, sql.Named("search", "%"+search+"%"), sql.Named("limit", LimitTask))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var task Task
+		err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+		if err != nil {
+
+			return nil, err
+		}
+		tasks = append(tasks, task)
+	}
+
+	return tasks, nil
+}

@@ -93,10 +93,32 @@ func PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetTasksHandler(w http.ResponseWriter, r *http.Request) {
-	tasks, err := model.Database.GetTasks()
-	if err != nil {
-		errorResponse(w, "error getting tasks", err)
-		return
+	var tasks []model.Task
+	search := r.URL.Query().Get("search")
+
+	if len(search) > 0 {
+		date, err := time.Parse(model.SearchDateFormat, search)
+
+		if err != nil {
+			tasks, err = model.Database.GetTasksByTitleOrComment(search)
+			if err != nil {
+				errorResponse(w, "error getting tasks", err)
+				return
+			}
+		} else {
+			// search by date
+			tasks, err = model.Database.GetTasksByDate(date.Format(model.DateFormat))
+			if err != nil {
+				errorResponse(w, "error getting tasks", err)
+				return
+			}
+		}
+	} else {
+		var err error
+		if tasks, err = model.Database.GetTasks(); err != nil {
+			errorResponse(w, "error getting tasks", err)
+			return
+		}
 	}
 
 	if tasks == nil {
