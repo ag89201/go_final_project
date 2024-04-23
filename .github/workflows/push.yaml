@@ -12,7 +12,7 @@ jobs:
 
      
       - name: Run Application
-        run: go run -v .
+        run: go run -v . &
 
       
       - name: Run Unit Tests
