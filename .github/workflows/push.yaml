@@ -23,39 +23,39 @@ jobs:
       # - name: Run Unit Tests
       #   run: GOOS=linux GOARCH=amd64 go test ./tests
 
-      - name: Run Test 1
+      - name: Run Test 1 TestApp
         run: |
           go test  -run ^TestApp$ ./tests
 
-      - name: Run Test 2
+      - name: Run Test 2 TestDB
         run: |
           go test -run ^TestDB$ ./tests
 
-      - name: Run Test 3
+      - name: Run Test 3 TestNextDate
         run: |
           go test -run ^TestNextDate$ ./tests
 
-      - name: Run Test 4
+      - name: Run Test 4 TestAddTask
         run: |
           go test -run ^TestAddTask$ ./tests
 
-      - name: Run Test 5
+      - name: Run Test 5 TestTasks
         run: |
           go test -run ^TestTasks$ ./tests
 
-      - name: Run Test 6.1
+      - name: Run Test 6.1 TestTask
         run: |
           go test -run ^TestTask$ ./tests
 
-      - name: Run Test 6.2
+      - name: Run Test 6.2 TesteditTask
         run: |
           go test -run ^TestEditTask$ ./tests
 
-      - name: Run Test 7.1
+      - name: Run Test 7.1 TestDone
         run: |
           go test -run ^TestDone$ ./tests
 
-      - name: Run Test 7.2
+      - name: Run Test 7.2 TestDelTask
         run: |
           go test -run ^TestDelTask$ ./tests
 
