@@ -11,10 +11,10 @@ jobs:
         run: GOOS=linux GOARCH=amd64 go mod tidy
 
       - name : Build
-        run: go build -o go_final_project
+        run: go build -v ./...
       
       - name: Run Application
-        run: ./go_final_project
+        run: go run -v ./...
 
       
       - name: Run Unit Tests
