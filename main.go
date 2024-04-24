@@ -10,18 +10,15 @@ import (
 )
 
 const (
-	DefDbName = "scheduler.db"
+	defDbName = "./scheduler.db"
 	defPort   = "7540"
 	webDir    = "./web"
 )
 
 func main() {
 	// get db filename
-	dbFile, err := domain.GetFileName("TODO_DBFILE", DefDbName)
+	dbFile := domain.GetEnv("TODO_DBFILE", defDbName)
 	log.Info("open database: " + dbFile)
-	if err != nil {
-		log.Panic(err)
-	}
 	if domain.FileNotExists(dbFile) {
 		log.Info("file not exists......")
 		err := domain.CreateFile(dbFile)
@@ -32,8 +29,8 @@ func main() {
 		log.Info("creating new file: " + dbFile)
 	}
 	//open database
-	model.Database, err = model.NewDataBase(dbFile)
-	if err != nil {
+	var err error
+	if model.Database, err = model.NewDataBase(dbFile); err != nil {
 		log.Panic(err)
 	}
 	defer model.Database.Close()
