@@ -2,18 +2,32 @@ package server
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
+	"runtime"
 	"strconv"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/ag89201/go_final_project/app/model"
 
 	"github.com/ag89201/go_final_project/app/domain"
 	"github.com/golang-jwt/jwt"
 )
+
+func errorInternalResponse(w http.ResponseWriter,  err error){
+
+	_, filename, line, _ := runtime.Caller(1)
+	log.Errorf("[%s:%d] %s", filename, line, err.Error())
+	if w != nil {
+		http.Error(w, fmt.Errorf("internal server error").Error(), http.StatusInternalServerError)
+	}
+	
+}
 
 func errorResponse(w http.ResponseWriter, errMsg string, err error) {
 	data, _ := json.Marshal(model.ErrorResponse{Error: fmt.Errorf("%s: %w", errMsg, err).Error()})
@@ -22,10 +36,11 @@ func errorResponse(w http.ResponseWriter, errMsg string, err error) {
 	_, err = w.Write(data)
 
 	if err != nil {
-		http.Error(w, fmt.Errorf("error: %w", err).Error(), http.StatusBadRequest)
+		errorInternalResponse(nil, err)
 		return
 	}
 }
+
 
 func NextDateHandler(w http.ResponseWriter, r *http.Request) {
 	now, err := time.Parse(model.DateFormat, r.FormValue("now"))
@@ -46,7 +61,7 @@ func NextDateHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write([]byte(nextDate))
 
 	if err != nil {
-		errorResponse(w, "error writing response", err)
+		log.Error(err)
 		return
 	}
 }
@@ -72,13 +87,13 @@ func PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, err := model.Database.InsertTask(newTask)
 	if err != nil {
-		errorResponse(w, "error inserting task", err)
+		errorInternalResponse(w, err)
 		return
 	}
 
 	data, err := json.Marshal(model.IdResponse{Id: id})
 	if err != nil {
-		errorResponse(w, "error marshaling response", err)
+		errorInternalResponse(w,err)
 		return
 	}
 
@@ -86,7 +101,7 @@ func PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write(data)
 	if err != nil {
-		errorResponse(w, "error writing response", err)
+		errorInternalResponse(nil, err)
 		return
 	}
 
@@ -102,21 +117,21 @@ func GetTasksHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			tasks, err = model.Database.GetTasksByTitleOrComment(search)
 			if err != nil {
-				errorResponse(w, "error getting tasks", err)
+				errorInternalResponse(w,err)
 				return
 			}
 		} else {
 			// search by date
 			tasks, err = model.Database.GetTasksByDate(date.Format(model.DateFormat))
 			if err != nil {
-				errorResponse(w, "error getting tasks", err)
+				errorInternalResponse(w,err)
 				return
 			}
 		}
 	} else {
 		var err error
 		if tasks, err = model.Database.GetTasks(); err != nil {
-			errorResponse(w, "error getting tasks", err)
+			errorInternalResponse(w,err)
 			return
 		}
 	}
@@ -127,7 +142,7 @@ func GetTasksHandler(w http.ResponseWriter, r *http.Request) {
 
 	data, err := json.Marshal(model.TaskResponse{Tasks: tasks})
 	if err != nil {
-		errorResponse(w, "error marshaling response", err)
+		errorInternalResponse(w,err)
 		return
 	}
 
@@ -136,7 +151,7 @@ func GetTasksHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(data)
 
 	if err != nil {
-		errorResponse(w, "error writing response", err)
+		errorInternalResponse(nil, err)
 		return
 	}
 
@@ -153,13 +168,17 @@ func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 	task, err := model.Database.GetTask(id)
 
 	if err != nil {
-		errorResponse(w, "error getting task", err)
-		return
+		if err == sql.ErrNoRows {
+		    errorResponse(w, "task was not found", err)
+			return
+		}
+		errorInternalResponse(w,err)
+		return		
 	}
 
 	data, err := json.Marshal(task)
 	if err != nil {
-		errorResponse(w, "error marshaling response", err)
+		errorInternalResponse(w,err)
 		return
 	}
 
@@ -168,7 +187,7 @@ func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(data)
 
 	if err != nil {
-		errorResponse(w, "error writing response", err)
+		errorInternalResponse(nil, err)
 		return
 	}
 
@@ -199,21 +218,26 @@ func PutTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rowsAffected, err := model.Database.UpdateTask(task)
-	if rowsAffected == 0 || err != nil {
-		errorResponse(w, "error updating task", err)
+	if err != nil {
+	    errorInternalResponse(w,err)
+		return
+	}
+	if rowsAffected == 0 {
+		errorResponse(w, "task was not found", err)
 		return
 	}
 
 	data, err := json.Marshal(task)
 	if err != nil {
-		errorResponse(w, "error marshaling response", err)
+		errorInternalResponse(w,err)
 		return
 	}
 	w.Header().Set(contentTypeHeader, jsonMimeType)
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(data)
 	if err != nil {
-		errorResponse(w, "error writing response", err)
+		errorInternalResponse(nil,err)
+		
 		return
 	}
 
@@ -226,14 +250,25 @@ func PostDoneTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	task, err := model.Database.GetTask(id)
+	
 	if err != nil {
-		errorResponse(w, "error getting task", err)
-	}
+		if err == sql.ErrNoRows {
+			errorResponse(w, "task was not found", err)
+			return
+		}
+		errorInternalResponse(w,err)
+		return		    
+		}		
+	
 
 	if len(task.Repeat) == 0 {
-		err = model.Database.DeleteTask(id)
+		rows,err := model.Database.DeleteTask(id)
 		if err != nil {
-			errorResponse(w, "error deleting task", err)
+			errorInternalResponse(w, err)
+			return
+		}
+		if rows == 0 {
+		    errorResponse(w, "task was not found", err)
 			return
 		}
 	} else {
@@ -251,14 +286,14 @@ func PostDoneTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	data, err := json.Marshal(struct{}{})
 	if err != nil {
-		errorResponse(w, "error marshaling response", err)
+		errorInternalResponse(w,err)
 		return
 	}
 	w.Header().Set(contentTypeHeader, jsonMimeType)
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(data)
 	if err != nil {
-		errorResponse(w, "error writing response", err)
+		errorInternalResponse(nil,err)
 		return
 	}
 
@@ -270,21 +305,27 @@ func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, "invalid id", err)
 		return
 	}
-	err = model.Database.DeleteTask(id)
+
+	rows,err := model.Database.DeleteTask(id)
 	if err != nil {
-		errorResponse(w, "error deleting task", err)
+		errorInternalResponse(w, err)
 		return
 	}
+	if rows == 0 {
+		errorResponse(w, "task was not found", err)
+		return
+	}
+
 	data, err := json.Marshal(struct{}{})
 	if err != nil {
-		errorResponse(w, "error marshaling response", err)
+		errorInternalResponse(w,err)
 		return
 	}
 	w.Header().Set(contentTypeHeader, jsonMimeType)
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(data)
 	if err != nil {
-		errorResponse(w, "error writing response", err)
+		errorInternalResponse(nil, err)
 		return
 	}
 }
@@ -314,7 +355,7 @@ func SigninHandler(w http.ResponseWriter, r *http.Request) {
 
 		takIdData, err := json.Marshal(model.AuthToken{Token: token})
 		if err != nil {
-			errorResponse(w, "error marshaling response", err)
+			errorInternalResponse(w,err)
 			return
 		}
 		w.Header().Set(contentTypeHeader, jsonMimeType)
@@ -322,20 +363,20 @@ func SigninHandler(w http.ResponseWriter, r *http.Request) {
 		_, err = w.Write(takIdData)
 
 		if err != nil {
-			errorResponse(w, "error writing response", err)
+			errorInternalResponse(nil,err)
 			return
 		}
 	} else {
 		errData, err := json.Marshal(model.ErrorResponse{Error: "wrong password"})
 		if err != nil {
-			errorResponse(w, "error marshaling response", err)
+			errorInternalResponse(w,err)
 			return
 		}
 		w.Header().Set(contentTypeHeader, jsonMimeType)
 		w.WriteHeader(http.StatusUnauthorized)
 		_, err = w.Write(errData)
 		if err != nil {
-			errorResponse(w, "error writing response", err)
+			errorInternalResponse(nil,err)
 			return
 		}
 	}

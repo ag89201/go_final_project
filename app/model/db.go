@@ -2,7 +2,6 @@ package model
 
 import (
 	"database/sql"
-	"errors"
 
 	_ "modernc.org/sqlite"
 )
@@ -118,24 +117,13 @@ func (s Db) UpdateTask(task Task) (int64, error) {
 	return rowsAffected, nil
 }
 
-func (s Db) DeleteTask(id int) error {
+func (s Db) DeleteTask(id int) (int64,error) {
 
 	res, err := s.db.Exec(`DELETE FROM scheduler WHERE id = :id`, sql.Named("id", id))
 	if err != nil {
-		return err
+		return 0,err
 	}
-
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected == 0 {
-
-		return errors.New("task not found")
-	}
-
-	return nil
+	return res.RowsAffected()
 }
 
 func (s Db) GetTasksByDate(date string) ([]Task, error) {

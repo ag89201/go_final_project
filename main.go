@@ -26,7 +26,7 @@ func main() {
 			log.Panic(err)
 
 		}
-		log.Info("creating new file: " + dbFile)
+		log.Info("created new file: " + dbFile)
 	}
 	//open database
 	var err error
