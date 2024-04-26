@@ -61,7 +61,7 @@ func NextDateHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write([]byte(nextDate))
 
 	if err != nil {
-		log.Error(err)
+errorInternalResponse(nil, err)
 		return
 	}
 }
