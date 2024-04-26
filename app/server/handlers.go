@@ -252,7 +252,7 @@ func PostDoneTaskHandler(w http.ResponseWriter, r *http.Request) {
 	task, err := model.Database.GetTask(id)
 	
 	if err != nil {
-		if err == sql.ErrNoRows {
+if errors.Is(err, sql.ErrNoRows) {
 			errorResponse(w, "task was not found", err)
 			return
 		}
