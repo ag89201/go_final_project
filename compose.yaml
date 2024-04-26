@@ -1,0 +1,16 @@
+services:
+  server:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "7540:7540"
+    environment:
+      TODO_PORT: 7540
+      TODO_DBFILE: "/app/db/scheduler.db"
+      TODO_PASSWORD: ""
+    volumes:
+      - appdata:/app/db
+
+volumes:
+  appdata:
