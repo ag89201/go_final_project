@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -61,7 +62,7 @@ func NextDateHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write([]byte(nextDate))
 
 	if err != nil {
-errorInternalResponse(nil, err)
+		errorInternalResponse(nil, err)
 		return
 	}
 }
@@ -252,7 +253,7 @@ func PostDoneTaskHandler(w http.ResponseWriter, r *http.Request) {
 	task, err := model.Database.GetTask(id)
 	
 	if err != nil {
-if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			errorResponse(w, "task was not found", err)
 			return
 		}
